@@ -1,20 +1,28 @@
 const fs = require("fs/promises");
+const readline = require('readline');
 const MyBuffer = require("./01.buffer.js");
 const FileSystem = require("./02.filesystem.js");
-const GetNextLine = require("./42like/00.get_next_line.js");
 
-async function getCommandFileName() {
-  const gnl = new GetNextLine("terminal", { prompt: "> " });
-  console.log("Enter the name of the command file:");
-  const fileName = await gnl.getNextLine();
-  await gnl.close();
-  return fileName;
+
+function getCommandFileName() {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    rl.question("Enter the name of the command file: ", (fileName) => {
+      rl.close();
+      resolve(fileName.trim() || 'command.txt');
+    });
+  });
 }
 
 (async function () {
   // const filePath = __dirname + "/command_file.txt";
-  const commandFileName = await getCommandFileName();
-  const filePath = __dirname + "/" + commandFileName;
+  const filePath = await getCommandFileName();
+  // const filePath = __dirname + "/" + commandFileName;
+  await FileSystem.createFile(filePath);
   FileSystem.fileWatcher(filePath, { type: "change" }, cb);
 
   function splitOnFirstSpace(str) {

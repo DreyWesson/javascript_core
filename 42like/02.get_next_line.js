@@ -1,4 +1,4 @@
-const fs = require('fs').promises;
+const fs = require('fs/promises');
 const readline = require('readline');
 
 class GetNextLine {
@@ -114,32 +114,6 @@ class GetNextLine {
     return line;
   }
 }
-
-// async function main() {
-//   let gnl;
-//   if (process.argv[2] === '--terminal') {
-//     gnl = new GetNextLine('terminal', { prompt: '> ' });
-//     console.log("Enter lines of text. Type 'EOF' to end input.");
-//   } else {
-//     const filename = process.argv[2] || 'example.txt';
-//     gnl = new GetNextLine(filename, { bufferSize: 64, lineEnding: /\r?\n|\r/ });
-//     console.log(`Reading from file: ${filename}`);
-//   }
-
-//   try {
-//     let line;
-//     while ((line = await gnl.getNextLine()) !== null) {
-//       console.log(`Line: ${line}`);
-//     }
-//     console.log("Input ended.");
-//   } catch (error) {
-//     console.error('Error:', error.message);
-//   } finally {
-//     await gnl.close();
-//   }
-// }
-
-// main().catch(console.error);
 
 async function promptForFilename(rl) {
   return new Promise((resolve) => {
