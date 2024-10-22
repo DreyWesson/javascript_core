@@ -26,11 +26,12 @@ class FileSystem {
       console.log(`${oldname} rename successful: ${newname}`);
       return true;
     } catch (error) {
-      if (error.code === "EEXIST") {
-        console.log(`${oldname} already exists`);
+      if (error.code === "ENOENT") {
+        console.log(`${oldname} does not exist`);
+      } else {
+        console.log(`Error occurred when renaming: ${oldname}`);
+        throw error;
       }
-      console.log(`Error occurred when renaming: ${oldname}`);
-      throw error;
     }
   }
 
