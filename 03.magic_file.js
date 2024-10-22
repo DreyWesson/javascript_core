@@ -11,22 +11,15 @@ const { getCommandFileName } = require("./utils/index.js");
 
   function splitOnFirstSpace(str) {
     const index = str.indexOf(" ");
-
-    if (index === -1) {
-      return [str];
-    }
-
-    const firstPart = str.slice(0, index);
-    const secondPart = str.slice(index + 1);
-
-    return [firstPart, secondPart];
+    if (index === -1) return [str];
+    return [str.slice(0, index), str.slice(index + 1)];
   }
 
   async function cb() {
     const buffer = await FileSystem.readFile(filePath);
     const content = (await MyBuffer.getData(buffer)).utf8;
 
-    if (content.length < 2) return;
+    if (!content || content.length < 2) return;
 
     const actions = {
       CREATE_FILE: "create a file",
@@ -34,8 +27,28 @@ const { getCommandFileName } = require("./utils/index.js");
       RENAME_FILE: "rename a file",
       ADD_TO_FILE: "add to file",
       CALCULATE: "calculate",
+      EXECUTE_COMMAND: "execute command",
     };
 
+    if (content.includes("[WAIT]")) return;
+
+    if (content.startsWith(actions.EXECUTE_COMMAND)) {
+      const command = content.substr(actions.EXECUTE_COMMAND.length).trim();
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing command: ${error.message}`);
+          return;
+        }
+        if (stderr) {
+          console.error(`Command error output: ${stderr}`);
+          return;
+        }
+        console.log(`Command output:\n${stdout}`);
+      });
+      return; // Exit early after handling the command
+    }
+
+    // Check for other actions
     if (content.includes(actions.CREATE_FILE)) {
       const filename = content.substr(actions.CREATE_FILE.length).trim();
       await FileSystem.createFile(filename);
@@ -71,114 +84,133 @@ const { getCommandFileName } = require("./utils/index.js");
 
     // New Functionality for RESTful Calls
     const requests = parseHttpRequest(content);
-    console.log(requests);
+
+    // Check if requests are valid before processing
     for (const request of requests) {
-      await handleHttpRequest(request);
+      if (isHttpRequest(request)) {
+        await handleHttpRequest(request);
+      } else {
+        console.log("Not a valid HTTP request:", request);
+      }
     }
-    function parseHttpRequest(request) {
-      const requests = request.split("###");
-      const parsedRequests = [];
+  }
 
-      for (const req of requests) {
-        const lines = req.trim().split("\n");
+  function isHttpRequest(request) {
+    // Check for common HTTP methods in a case-sensitive manner
+    const httpMethods = [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "PATCH",
+      "OPTIONS",
+      "HEAD",
+    ];
+    return httpMethods.includes(request.method.toUpperCase());
+  }
 
-        if (lines.length === 0) continue; // Skip empty requests
+  function parseHttpRequest(request) {
+    const requests = request.split("###");
+    const parsedRequests = [];
 
-        // Extract the request line (first line)
-        const requestLine = lines[0].trim();
-        let [method, url, protocol] = requestLine.split(" ");
+    for (const req of requests) {
+      const lines = req.trim().split("\n");
+      if (lines.length === 0) continue; // Skip empty requests
 
-        // Default protocol if not provided
-        const defaultProtocol = "HTTP/1.1";
-        if (!protocol) {
-          protocol = defaultProtocol;
-        }
+      // Extract the request line (first line)
+      const requestLine = lines[0].trim();
+      let [method, url, protocol] = requestLine.split(" ");
 
-        // Initialize headers and body
-        const headers = {};
-        let body = "";
-        let isBody = false;
-
-        // Iterate through the lines to extract headers and body
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim();
-
-          if (line === "") {
-            // Empty line indicates the start of the body
-            isBody = true;
-            continue;
-          }
-
-          if (isBody) {
-            // If we are in the body section, accumulate the body content
-            body += line + " "; // Use space instead of newline
-          } else {
-            // Split header lines into key-value pairs
-            const [key, value] = line.split(/:\s+/);
-            if (key && value) {
-              headers[key] = value;
-            }
-          }
-        }
-
-        // Remove any trailing spaces from the body
-        body = body.trim();
-
-        // Determine how to parse based on Content-Type
-        const contentType = headers["Content-Type"] || headers["content-type"];
-
-        try {
-          if (contentType && contentType.includes("application/json")) {
-            // Parse JSON only if Content-Type indicates JSON
-            body = JSON.parse(body);
-          } else if (!body) {
-            console.warn("Empty body; skipping JSON parsing.");
-          }
-        } catch (e) {
-          console.error("Failed to parse JSON body:", e.message);
-          continue; // Skip this request if parsing fails
-        }
-
-        // Push parsed components into the array
-        parsedRequests.push({ method, url, protocol, headers, body });
+      // Default protocol if not provided
+      const defaultProtocol = "HTTP/1.1";
+      if (!protocol) {
+        protocol = defaultProtocol;
       }
 
-      return parsedRequests;
-    }
+      // Initialize headers and body
+      const headers = {};
+      let body = "";
+      let isBody = false;
 
-    async function handleHttpRequest({ method, url, headers, body }) {
-      let requestBody = body;
+      // Iterate through the lines to extract headers and body
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
 
-      // Check if body is a file reference like "< ./demo.xml"
-      if (typeof body === "string" && body.startsWith("<")) {
-        const filePath = body.slice(1).trim();
-        try {
-          requestBody = await FileSystem.readFile(filePath, "utf8");
-        } catch (err) {
-          console.error(`Error reading file ${filePath}: ${err.message}`);
-          return;
+        if (line === "") {
+          // Empty line indicates the start of the body
+          isBody = true;
+          continue;
+        }
+
+        if (isBody) {
+          // If we are in the body section, accumulate the body content
+          body += line + " "; // Use space instead of newline
+        } else {
+          // Split header lines into key-value pairs
+          const [key, value] = line.split(/:\s+/);
+          if (key && value) {
+            headers[key] = value;
+          }
         }
       }
 
-      const methodUpper = method.toUpperCase();
+      // Remove any trailing spaces from the body
+      body = body.trim();
 
-      // Prepare request options
-      const requestOptions = {
-        method: methodUpper,
-        headers,
-        // Include body only for methods that allow it
-        body: ["POST", "PUT", "PATCH"].includes(methodUpper)
-          ? JSON.stringify(requestBody) // Ensure it's a string
-          : undefined,
-      };
+      // Determine how to parse based on Content-Type
+      const contentType = headers["Content-Type"] || headers["content-type"];
 
       try {
-        const response = await fetch(url, requestOptions);
-        const responseData = await response.text();
-        console.log(`Response from ${methodUpper} ${url}:`, responseData);
-      } catch (error) {
-        console.error(`Error during HTTP request: ${error.message}`);
+        if (contentType && contentType.includes("application/json")) {
+          // Parse JSON only if Content-Type indicates JSON
+          body = JSON.parse(body);
+        } else if (!body) {
+          console.warn("Empty body; skipping JSON parsing.");
+        }
+      } catch (e) {
+        console.error("Failed to parse JSON body:", e.message);
+        continue; // Skip this request if parsing fails
       }
+
+      // Push parsed components into the array
+      parsedRequests.push({ method, url, protocol, headers, body });
+    }
+
+    return parsedRequests;
+  }
+
+  async function handleHttpRequest({ method, url, headers, body }) {
+    let requestBody = body;
+
+    // Check if body is a file reference like "< ./demo.xml"
+    if (typeof body === "string" && body.startsWith("<")) {
+      const filePath = body.slice(1).trim();
+      try {
+        requestBody = await FileSystem.readFile(filePath, "utf8");
+      } catch (err) {
+        console.error(`Error reading file ${filePath}: ${err.message}`);
+        return;
+      }
+    }
+
+    const methodUpper = method.toUpperCase();
+
+    // Prepare request options
+    const requestOptions = {
+      method: methodUpper,
+      headers,
+      // Include body only for methods that allow it
+      body: ["POST", "PUT", "PATCH"].includes(methodUpper)
+        ? JSON.stringify(requestBody) // Ensure it's a string
+        : undefined,
+    };
+
+    try {
+      const response = await fetch(url, requestOptions);
+      const responseData = await response.text();
+      console.log(`Response from ${methodUpper} ${url}:`, responseData);
+    } catch (error) {
+      console.error(`Error during HTTP request: ${error.message}`);
     }
   }
 })().catch(console.error);
