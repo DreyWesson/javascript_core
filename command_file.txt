@@ -1,0 +1,1 @@
+add to file ./magical.txt New Magic text in file

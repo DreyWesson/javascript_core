@@ -1,0 +1,128 @@
+const MyBuffer = require("./01.buffer.js");
+const fs = require("fs/promises");
+
+class FileSystem {
+  static async createFile(filename) {
+    try {
+      const file = await fs.open(filename, "wx");
+      await file.close();
+      console.log(`${filename} created successfully!`);
+      return true;
+    } catch (error) {
+      if (error.code === "EEXIST") {
+        console.log(`${filename} already exists`);
+        return false;
+      } else {
+        console.log(`Error creating file ${filename}: `, error);
+        throw error
+      }
+    }
+  }
+
+  static async renameFile(oldname, newname) {
+    try {
+      await fs.rename(oldname, newname);
+      console.log(`${oldname} rename successful: ${newname}`);
+      return true;
+    } catch (error) {
+      if (error.code === "EEXIST") {
+        console.log(`${oldname} already exists`);
+      }
+      console.log(`Error occurred when renaming: ${oldname}`);
+      throw error;
+    }
+  }
+
+  static async openFile(filePath, options = {}) {
+    try {
+      return await fs.open(filePath, options.flags || "r");
+    } catch (error) {
+      console.error("Error opening file:", error);
+    }
+  }
+
+  static async deleteFile(filename) {
+    try {
+      await fs.unlink(filename);
+      console.log(`File deleted successfully: ${filename}`);
+      return true;
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        console.log(`File not found: ${filename}`);
+      } else {
+        console.log(`Error deleting ${filename}: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  static async addToFile(filename, content) {
+    try {
+      await fs.appendFile(filename, content);
+      console.log(`Successfully added content to ${filename}`);
+    } catch (error) {
+      console.log(`Error occurred adding content to ${filename} error`);
+      throw error;
+    }
+  }
+
+  static async readFile(filePath, options = {}) {
+    let file;
+    try {
+      file = await this.openFile(filePath, { flags: options.flags });
+      const { size } = (await this.getFileStat(filePath)).size;
+      const buffer = Buffer.alloc(options?.size ?? size ?? 1024);
+      const { bytesRead } = await file.read({
+        buffer: buffer,
+        offset: options.offset || 0,
+        length: buffer.byteLength,
+        position: options.position || null,
+      });
+
+      return buffer.slice(0, bytesRead);
+    } catch (error) {
+      throw new Error(`Error reading file: ${error.message}`);
+    } finally {
+      if (file) await file.close();
+    }
+  }
+
+  static async getFileStat(filePath, options = {}) {
+    let file;
+    try {
+      file = await this.openFile(filePath, { flags: options.flags });
+      return await file.stat();
+    } catch (error) {
+      throw new Error(`Error getting file stats: ${error.message}`);
+    } finally {
+      if (file && options.shouldClose !== false) await file.close();
+    }
+  }
+
+  static async reader(filePath, options = {}) {
+    try {
+      const buffer = await this.readFile(filePath, options);
+      return MyBuffer.getData(buffer, options.dataTypes || []);
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        throw new Error(`File not found: ${filePath}`);
+      }
+      throw new Error(`Error reading file content: ${error.message}`);
+    }
+  }
+
+  static async fileWatcher(filePath, options = {}, cb) {
+    try {
+      const watcher = fs.watch(filePath, options.watchOptions);
+      for await (const event of watcher) {
+        if (event.eventType === options.type?.toLowerCase()) cb();
+      }
+    } catch (error) {
+      throw new Error(`Error watching file: ${error.message}`);
+    } finally {
+      if (watcher) watcher.close();
+    }
+  }
+}
+
+module.exports = FileSystem;
