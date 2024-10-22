@@ -1,5 +1,6 @@
-const MyBuffer = require("./01.buffer.js");
 const fs = require("fs/promises");
+const MyBuffer = require("./01.buffer.js");
+const { debounce } = require("./utils/index.js");
 
 class FileSystem {
   static async createFile(filename) {
@@ -14,7 +15,7 @@ class FileSystem {
         return false;
       } else {
         console.log(`Error creating file ${filename}: `, error);
-        throw error
+        throw error;
       }
     }
   }
@@ -112,15 +113,17 @@ class FileSystem {
   }
 
   static async fileWatcher(filePath, options = {}, cb) {
+    const debouncedCallback = debounce(cb, 100)
+    let watcher
     try {
-      const watcher = fs.watch(filePath, options.watchOptions);
+      watcher = fs.watch(filePath, options.watchOptions);
       for await (const event of watcher) {
-        if (event.eventType === options.type?.toLowerCase()) cb();
+        if (event.eventType === options.type?.toLowerCase()) {
+          debouncedCallback();
+        }
       }
     } catch (error) {
       throw new Error(`Error watching file: ${error.message}`);
-    } finally {
-      if (watcher) watcher.close();
     }
   }
 }

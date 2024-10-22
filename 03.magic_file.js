@@ -1,27 +1,10 @@
-const fs = require("fs/promises");
-const readline = require('readline');
 const MyBuffer = require("./01.buffer.js");
 const FileSystem = require("./02.filesystem.js");
-
-
-function getCommandFileName() {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    rl.question("Enter the name of the command file: ", (fileName) => {
-      rl.close();
-      resolve(fileName.trim() || 'command.txt');
-    });
-  });
-}
+const { getCommandFileName } = require("./utils/index.js");
 
 (async function () {
-  // const filePath = __dirname + "/command_file.txt";
   const filePath = await getCommandFileName();
-  // const filePath = __dirname + "/" + commandFileName;
+
   await FileSystem.createFile(filePath);
   FileSystem.fileWatcher(filePath, { type: "change" }, cb);
 
