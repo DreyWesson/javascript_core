@@ -33,8 +33,7 @@ async function processLine(line) {
   if (actionIncludes(action, actions.CREATE_FILE)) {
     await FileSystem.createFile(filePath);
   } else if (actionIncludes(action, actions.DELETE_FILE)) {
-    const filename = content.substr(actions.DELETE_FILE.length).trim();
-    await FileSystem.deleteFile(filename);
+    await FileSystem.deleteFile(filePath);
   } else if (actionIncludes(action, actions.RENAME_FILE)) {
     let oldname = filePath;
     let newname = content;

@@ -22,6 +22,7 @@ const actions = {
     "launch",
   ],
   DELETE_FILE: [
+    "delete",
     "demolish",
     "obliterate",
     "ruin",
@@ -53,6 +54,7 @@ const actions = {
   ],
   ADD_TO_FILE: [
     "add",
+    "write",
     "append",
     "attach",
     "include",

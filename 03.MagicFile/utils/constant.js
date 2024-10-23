@@ -22,6 +22,7 @@ const actions = {
     "launch",
   ],
   DELETE_FILE: [
+    "delete",
     "demolish",
     "obliterate",
     "ruin",
