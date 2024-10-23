@@ -20,6 +20,7 @@ const { Buffer } = require("buffer");
  * * let buf = Buffer.from("486921", "hex"); // I find this most convenient
  */
 
+let buf = Buffer.from("486921", "hex");
 class MyBuffer {
   static keys = ["ascii", "binary", "hex", "octal", "utf8"];
 
@@ -54,5 +55,5 @@ class MyBuffer {
     return res;
   }
 }
-
+// console.log(MyBuffer.getData(buf))
 module.exports = MyBuffer;

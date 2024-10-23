@@ -11,7 +11,11 @@ const { getCommandFileName } = require("../utils/index.js");
   const ext = extIdx !== -1 ? filePath.substring(extIdx + 1) : "";
 
   await FileSystem.createFile(filePath);
-  FileSystem.fileWatcher(filePath, { type: "change" }, cb);
+  const options = { type: "change" };
+  // if (ext === "http" || ext === "rest") {
+  //   options.debounce_delay = 2000;
+  // }
+  FileSystem.fileWatcher(filePath, options, cb);
 
   async function cb() {
     const buffer = await FileSystem.readFile(filePath);

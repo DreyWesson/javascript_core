@@ -119,9 +119,20 @@ class FileSystem {
     let watcher;
     try {
       watcher = fs.watch(filePath, options.watchOptions);
+      // for await (const event of watcher) {
+      //   if (event.eventType === options.type?.toLowerCase()) {
+      //     debouncedCallback();
+      //   }
+      // }
+      let lastEventType = null;
+
       for await (const event of watcher) {
-        if (event.eventType === options.type?.toLowerCase()) {
+        if (
+          event.eventType === options.type?.toLowerCase() &&
+          event.eventType !== lastEventType
+        ) {
           debouncedCallback();
+          lastEventType = event.eventType; // Store the last event type
         }
       }
     } catch (error) {
