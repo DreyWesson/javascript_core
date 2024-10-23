@@ -1,5 +1,5 @@
-const fs = require('fs/promises');
-const readline = require('readline');
+const fs = require("fs/promises");
+const readline = require("readline");
 
 class GetNextLine {
   constructor(source, options = {}) {
@@ -13,7 +13,7 @@ class GetNextLine {
     this.fileOffset = 0;
     this.eof = false;
     this.lineEnding = options.lineEnding || /\r?\n/;
-    this.isTerminal = source === 'terminal';
+    this.isTerminal = source === "terminal";
   }
 
   async open() {
@@ -21,11 +21,11 @@ class GetNextLine {
       this.rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
-        prompt: this.options.prompt || ''
+        prompt: this.options.prompt || "",
       });
     } else {
       try {
-        this.fileHandle = await fs.open(this.source, 'r');
+        this.fileHandle = await fs.open(this.source, "r");
       } catch (error) {
         throw new Error(`Failed to open file: ${error.message}`);
       }
@@ -73,8 +73,8 @@ class GetNextLine {
 
     if (this.isTerminal) {
       return new Promise((resolve) => {
-        this.rl.question('', (line) => {
-          if (line.toLowerCase() === 'eof') {
+        this.rl.question("", (line) => {
+          if (line.toLowerCase() === "eof") {
             this.eof = true;
             resolve(null);
           } else {
@@ -84,7 +84,7 @@ class GetNextLine {
       });
     }
 
-    let line = '';
+    let line = "";
     let lineEnding = null;
 
     while (true) {
@@ -96,7 +96,10 @@ class GetNextLine {
         }
       }
 
-      const remainingBuffer = this.buffer.slice(this.bufferOffset, this.bufferLength);
+      const remainingBuffer = this.buffer.slice(
+        this.bufferOffset,
+        this.bufferLength
+      );
       const endingMatch = remainingBuffer.toString().match(this.lineEnding);
 
       if (endingMatch) {
@@ -117,7 +120,7 @@ class GetNextLine {
 
 async function promptForFilename(rl) {
   return new Promise((resolve) => {
-    rl.question('Enter a filename to save the input: ', (filename) => {
+    rl.question("Enter a filename to save the input: ", (filename) => {
       resolve(filename);
     });
   });
@@ -128,27 +131,27 @@ async function main() {
   let outputFile;
   let outputStream;
 
-  if (process.argv[2] === '--terminal') {
-    gnl = new GetNextLine('terminal', { prompt: '> ' });
+  if (process.argv[2] === "--terminal") {
+    gnl = new GetNextLine("terminal", { prompt: "> " });
     console.log("Enter lines of text. Type 'EOF' to end input.");
 
     // Prompt for filename
     const rl = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
     const filename = await promptForFilename(rl);
     rl.close();
 
     // Open file for writing
-    outputFile = await fs.open(filename, 'w');
+    outputFile = await fs.open(filename, "w");
     outputStream = outputFile.createWriteStream();
 
     console.log(`Writing input to file: ${filename}`);
   } else {
-    const filename = process.argv[2] || 'example.txt';
+    const filename = process.argv[2] || "example.txt";
     gnl = new GetNextLine(filename, { bufferSize: 64, lineEnding: /\r?\n|\r/ });
-    console.log(`Reading from file: ${filename}`);
+    console.log(`Reading from file:${filename}\n`);
   }
 
   try {
@@ -157,16 +160,16 @@ async function main() {
       console.log(`Line: ${line}`);
       if (outputStream) {
         await new Promise((resolve, reject) => {
-          outputStream.write(line + '\n', (err) => {
+          outputStream.write(line + "\n", (err) => {
             if (err) reject(err);
             else resolve();
           });
         });
       }
     }
-    console.log("Input ended.");
+    console.log("\nInput ended.");
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error("Error:", error.message);
   } finally {
     await gnl.close();
     if (outputStream) {

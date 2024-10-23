@@ -1,42 +1,67 @@
 const FileSystem = require("../../02.FileSystem/02.filesystem.js");
+const { GetNextLine } = require("../../42like/02.get_next_line.js");
+const { actions } = require("../utils/constant.js");
 
-function splitOnFirstSpace(str) {
-  const index = str.indexOf(" ");
-  if (index === -1) return [str];
-  return [str.slice(0, index), str.slice(index + 1)];
-}
+function formatExtractedTokens(command) {
+  const splitCommand = command.split(" ");
 
-const actions = {
-  CREATE_FILE: "create a file",
-  DELETE_FILE: "delete a file",
-  RENAME_FILE: "rename a file",
-  ADD_TO_FILE: "add to file",
-  CALCULATE: "calculate",
-  EXECUTE_COMMAND: "execute command",
-};
+  const pathIndex = splitCommand.findIndex(
+    (part) =>
+      part.startsWith("/") || part.startsWith("./") || part.includes(".")
+  );
 
-async function fileOperations(content) {
-  if (content.includes(actions.CREATE_FILE)) {
-    const filename = content.substr(actions.CREATE_FILE.length).trim();
-    await FileSystem.createFile(filename);
+  if (pathIndex === -1) {
+    return [command];
   }
 
-  if (content.includes(actions.DELETE_FILE)) {
+  const actionPart = splitCommand.slice(0, pathIndex).join(" ");
+  const filePath = splitCommand[pathIndex];
+  const content = splitCommand.slice(pathIndex + 1).join(" ");
+
+  return [actionPart, filePath, content];
+}
+
+function actionIncludes(actionPart, actionArray) {
+  return actionArray.some((word) =>
+    actionPart.toLowerCase().includes(word.toLowerCase())
+  );
+}
+
+async function processLine(line) {
+  const [action, filePath, content] = formatExtractedTokens(line);
+
+  if (actionIncludes(action, actions.CREATE_FILE)) {
+    await FileSystem.createFile(filePath);
+  } else if (actionIncludes(action, actions.DELETE_FILE)) {
     const filename = content.substr(actions.DELETE_FILE.length).trim();
     await FileSystem.deleteFile(filename);
-  }
-
-  if (content.includes(actions.RENAME_FILE)) {
-    const filename = content.substr(actions.RENAME_FILE.length).trim();
-    const [oldname, newname] = filename.split(" ");
-    await FileSystem.renameFile(oldname.trim(), newname.trim());
-  }
-
-  if (content.includes(actions.ADD_TO_FILE)) {
-    const rest = content.substr(actions.ADD_TO_FILE.length).trim();
-    const [filename, new_content] = splitOnFirstSpace(rest);
-    await FileSystem.addToFile(filename, new_content);
+  } else if (actionIncludes(action, actions.RENAME_FILE)) {
+    let oldname = filePath;
+    let newname = content;
+    await FileSystem.renameFile(oldname, newname);
+  } else if (actionIncludes(action, actions.ADD_TO_FILE)) {
+    await FileSystem.addToFile(filePath, content);
   }
 }
 
-module.exports = fileOperations;
+async function fileHandler(filePath) {
+  const gnl = new GetNextLine(filePath, {
+    bufferSize: 64,
+    lineEnding: /\r?\n|\r/,
+  });
+
+  try {
+    await gnl.open();
+    let line;
+    while ((line = await gnl.getNextLine()) !== null) {
+      await processLine(line);
+    }
+    console.log("File processing completed.");
+  } catch (error) {
+    console.error("Error during file processing:", error.message);
+  } finally {
+    await gnl.close();
+  }
+}
+
+module.exports = { fileHandler };
