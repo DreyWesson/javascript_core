@@ -17,7 +17,7 @@ const { getCommandFileName } = require("../utils/index.js");
 
   async function cb() {
     const buffer = await FileSystem.readFile(filePath);
-    const content = (await MyBuffer.getData(buffer)).utf8;
+    const {utf8: content} = (await MyBuffer.getData(buffer));
 
     if (!content || content.length < 2) return;
 

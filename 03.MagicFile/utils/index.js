@@ -9,12 +9,14 @@ const isHttpRequest = (request) => {
     "HEAD",
   ];
   return httpMethods.includes(request.method.toUpperCase());
-}
+};
 
 function parseHttpRequest(request) {
   const lines = request.split(/\r?\n/);
   const parsedRequests = [];
-  let method, url, protocol = "HTTP/1.1";
+  let method,
+    url,
+    protocol = "HTTP/1.1";
   const headers = {};
   let bodyLines = [];
   let state = "REQUEST_LINE";
@@ -52,11 +54,13 @@ function parseHttpRequest(request) {
       } else if (contentLength > 0) {
         // Read body based on Content-Length
         bodyLines.push(trimmedLine);
-        contentLength -= Buffer.byteLength(trimmedLine, 'utf-8');
+        contentLength -= Buffer.byteLength(trimmedLine, "utf-8");
         if (contentLength <= 0) {
           state = "END"; // End of body based on Content-Length
         }
-      } else if (/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)/.test(trimmedLine)) {
+      } else if (
+        /^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)/.test(trimmedLine)
+      ) {
         // If we encounter another request line, finalize the current request
         parsedRequests.push({
           method,
@@ -107,4 +111,36 @@ function parseBody(body, headers) {
   return body.trim();
 }
 
-module.exports = { parseHttpRequest, isHttpRequest };
+function printWelcome() {
+  const RESET = "\x1b[0m";
+  const BOLD = "\x1b[1m";
+  const GREEN = "\x1b[32m";
+  const YELLOW = "\x1b[33m";
+  const BLUE = "\x1b[34m";
+  const MAGENTA = "\x1b[35m";
+  const CYAN = "\x1b[36m";
+  const GRAY = "\x1b[90m";
+  const RED = "\x1b[31m";
+
+  console.log(`${BOLD}${GREEN}Welcome to the Command Processor!${RESET}`);
+  console.log(
+    `Enter the name of the command file when prompted.`
+  );
+  console.log(
+    `${YELLOW}Usage based on file extensions:${RESET}`
+  );
+  console.log(
+    `${MAGENTA}  - ".http" or ".rest": ${GRAY}HTTP requests${RESET}`
+  );
+  console.log(
+    `${BLUE}  - ".txt" or ".file": ${GRAY}File operations${RESET}`
+  );
+  console.log(
+    `${GREEN}  - ".math": ${GRAY}Math calculations${RESET}`
+  );
+  console.log(
+    `${RED}  - No extension: ${GRAY}Terminal commands${RESET}`
+  );
+}
+
+module.exports = { parseHttpRequest, isHttpRequest, printWelcome };
