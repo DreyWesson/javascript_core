@@ -1,3 +1,5 @@
+const { isHttpRequest, parseHttpRequest } = require("../utils");
+
 async function handleHttpRequest({ method, url, headers, body }) {
     let requestBody = body;
 
@@ -32,5 +34,16 @@ async function handleHttpRequest({ method, url, headers, body }) {
       console.error(`Error during HTTP request: ${error.message}`);
     }
   }
+async function handleAllRequests(content) {
+  const requests = parseHttpRequest(content);
 
-module.exports = { handleHttpRequest };
+  for (const request of requests) {
+    if (isHttpRequest(request)) {
+      await handleHttpRequest(request);
+    } else {
+      console.log("Not a valid HTTP request:", request);
+    }
+  }
+}
+
+module.exports = { handleHttpRequest, handleAllRequests};
