@@ -18,6 +18,8 @@ function parseHttpRequest(request) {
   const headers = {};
   let bodyLines = [];
   let state = "REQUEST_LINE";
+  let contentLength = 0;
+  let isChunked = false;
 
   for (const line of lines) {
     const trimmedLine = line.trim();
@@ -25,24 +27,43 @@ function parseHttpRequest(request) {
     if (state === "REQUEST_LINE") {
       if (!trimmedLine) continue; // Skip empty lines before request line
       [method, url, protocol] = trimmedLine.split(" ");
+      protocol = protocol || "HTTP/1.1";
       state = "HEADERS";
     } else if (state === "HEADERS") {
       if (trimmedLine === "") {
         // An empty line indicates the end of headers, move to BODY state
+        contentLength = parseInt(headers["Content-Length"] || "0", 10);
+        isChunked = headers["Transfer-Encoding"]?.toLowerCase() === "chunked";
         state = "BODY";
       } else {
         const [key, value] = trimmedLine.split(/:\s+/);
         headers[key] = value;
       }
     } else if (state === "BODY") {
-      // If we encounter another request line, finalize the current request
-      if (/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)/.test(trimmedLine)) {
+      if (isChunked) {
+        // Handle chunked transfer encoding
+        let chunkSize = parseInt(trimmedLine, 16);
+        while (chunkSize > 0) {
+          const chunk = lines.splice(0, chunkSize).join("\n");
+          bodyLines.push(chunk);
+          chunkSize = parseInt(lines.shift(), 16); // Read next chunk size
+        }
+        state = "END"; // End of chunked body
+      } else if (contentLength > 0) {
+        // Read body based on Content-Length
+        bodyLines.push(trimmedLine);
+        contentLength -= Buffer.byteLength(trimmedLine, 'utf-8');
+        if (contentLength <= 0) {
+          state = "END"; // End of body based on Content-Length
+        }
+      } else if (/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)/.test(trimmedLine)) {
+        // If we encounter another request line, finalize the current request
         parsedRequests.push({
           method,
           url,
           protocol,
           headers: { ...headers },
-          body: parseBody(bodyLines.join("\n"), headers)
+          body: parseBody(bodyLines.join("\n"), headers),
         });
 
         // Reset for the next request
@@ -67,7 +88,7 @@ function parseHttpRequest(request) {
       url,
       protocol,
       headers,
-      body: parseBody(bodyLines.join("\n"), headers)
+      body: parseBody(bodyLines.join("\n"), headers),
     });
   }
 

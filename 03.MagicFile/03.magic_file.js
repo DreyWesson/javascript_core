@@ -21,20 +21,13 @@ const { getCommandFileName } = require("../utils/index.js");
 
     if (content.includes("[WAIT]")) return;
 
-    if (ext.length === 0) {
-      executeCommand(content);
-    }
+    if (ext === "") executeCommand(content);
 
-    if (ext === "txt" || ext === "file") {
-      await fileOperations(content);
-    }
+    
+    if (ext === "math") handleMath(content);
 
-    if (ext === "math") {
-      handleMath(content);
-    }
-
-    if (ext === "http" || ext === "rest") {
-      await handleAllRequests(content);
-    }
+    if (ext === "txt" || ext === "file") await fileOperations(content);
+    
+    if (ext === "http" || ext === "rest") await handleAllRequests(content);
   }
 })().catch(console.error);
