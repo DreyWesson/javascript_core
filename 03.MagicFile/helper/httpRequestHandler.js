@@ -27,11 +27,8 @@ async function handleHttpRequest({ method, url, headers, body }) {
 
   try {
     const response = await fetch(url, requestOptions);
-
-    // Log status and headers
-    const status = response.status;
-    const statusText = response.statusText;
     const responseHeaders = {};
+
     response.headers.forEach((value, name) => {
       responseHeaders[name] = value;
     });

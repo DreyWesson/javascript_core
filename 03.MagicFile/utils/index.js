@@ -14,7 +14,7 @@ const isHttpRequest = (request) => {
 function parseHttpRequest(request) {
   const lines = request.split(/\r?\n/);
   const parsedRequests = [];
-  let method, url, protocol = "HTTP/1.1"; // Default protocol
+  let method, url, protocol = "HTTP/1.1";
   const headers = {};
   let bodyLines = [];
   let state = "REQUEST_LINE";

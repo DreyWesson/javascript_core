@@ -23,12 +23,11 @@ const { getCommandFileName } = require("../utils/index.js");
 
     if (ext === "") executeCommand(content);
 
-
-    
     if (ext === "math") handleMath(content);
 
-    if (ext === "txt" || ext === "file") await fileOperations.fileHandler(filePath);
-    
+    if (ext === "txt" || ext === "file")
+      await fileOperations.fileHandler(filePath);
+
     if (ext === "http" || ext === "rest") await handleAllRequests(content);
   }
 })().catch(console.error);

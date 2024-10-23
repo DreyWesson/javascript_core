@@ -115,8 +115,8 @@ class FileSystem {
   }
 
   static async fileWatcher(filePath, options = {}, cb) {
-    const debouncedCallback = debounce(cb, 100)
-    let watcher
+    const debouncedCallback = debounce(cb, 100);
+    let watcher;
     try {
       watcher = fs.watch(filePath, options.watchOptions);
       for await (const event of watcher) {
