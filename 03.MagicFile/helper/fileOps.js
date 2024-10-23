@@ -1,4 +1,4 @@
-const FileSystem = require("../02.filesystem");
+const FileSystem = require("../../02.FileSystem/02.filesystem.js");
 
 function splitOnFirstSpace(str) {
   const index = str.indexOf(" ");

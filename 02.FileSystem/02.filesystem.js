@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
-const MyBuffer = require("./01.buffer.js");
-const { debounce } = require("./utils/index.js");
+const MyBuffer = require("../01.Buffer/01.buffer.js");
+const { debounce } = require("../utils/index.js");
+// const { debounce } = require("./utils/index.js");
 
 class FileSystem {
   static async createFile(filename) {

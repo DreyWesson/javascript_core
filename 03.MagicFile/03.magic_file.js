@@ -1,17 +1,9 @@
-const { exec } = require("child_process");
-const MyBuffer = require("./01.buffer.js");
-const FileSystem = require("./02.filesystem.js");
-const {
-  getCommandFileName,
-  isHttpRequest,
-  parseHttpRequest,
-} = require("./utils/index.js");
-const {
-  handleHttpRequest,
-  handleAllRequests,
-} = require("./helper/httpRequestHandler.js");
+const MyBuffer = require("../01.Buffer/01.buffer.js");
+const FileSystem = require("../02.FileSystem/02.filesystem.js");
+const { handleAllRequests } = require("./helper/httpRequestHandler.js");
 const fileOperations = require("./helper/fileOps.js");
 const { handleMath, executeCommand } = require("./helper/commandExecutor.js");
+const { getCommandFileName } = require("../utils/index.js");
 
 (async function () {
   const filePath = await getCommandFileName();
