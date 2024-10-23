@@ -14,17 +14,34 @@ const getCommandFileName = () => {
   });
 };
 
-const debounce = (fn, delay) => {
-    let timeId;
+// const debounce = (fn, delay) => {
+//     let timeId;
   
-    return function (...args) {
-      if (timeId) {
-        clearTimeout(timeId);
+//     return function (...args) {
+//       if (timeId) {
+//         clearTimeout(timeId);
+//       }
+//       timeId = setTimeout(() => {
+//         fn.apply(this, args);
+//       }, delay);
+//     };
+//   };
+
+const debounce = (fn, delay) => {
+  let timeId;
+  let lastCallTime = 0;
+
+  return function (...args) {
+      const now = Date.now();
+      if (now - lastCallTime < delay) {
+          clearTimeout(timeId);
       }
+      lastCallTime = now;
+
       timeId = setTimeout(() => {
-        fn.apply(this, args);
+          fn.apply(this, args);
       }, delay);
-    };
   };
+};
 
 module.exports = { getCommandFileName, debounce };

@@ -67,7 +67,6 @@ async function handleHttpRequest({ method, url, headers, body }) {
 async function handleAllRequests(content) {
   const requests = parseHttpRequest(content);
   for (const request of requests) {
-    console.log(request);
     if (isHttpRequest(request)) {
       await handleHttpRequest(request);
     } else {
