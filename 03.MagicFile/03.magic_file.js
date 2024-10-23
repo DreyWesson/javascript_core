@@ -12,9 +12,7 @@ const { getCommandFileName } = require("../utils/index.js");
 
   await FileSystem.createFile(filePath);
   const options = { type: "change" };
-  // if (ext === "http" || ext === "rest") {
-  //   options.debounce_delay = 2000;
-  // }
+
   FileSystem.fileWatcher(filePath, options, cb);
 
   async function cb() {

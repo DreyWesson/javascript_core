@@ -1,7 +1,6 @@
 const fs = require("fs/promises");
 const MyBuffer = require("../01.Buffer/01.buffer.js");
 const { debounce } = require("../utils/index.js");
-// const { debounce } = require("./utils/index.js");
 
 class FileSystem {
   static async createFile(filename) {
@@ -119,20 +118,10 @@ class FileSystem {
     let watcher;
     try {
       watcher = fs.watch(filePath, options.watchOptions);
-      // for await (const event of watcher) {
-      //   if (event.eventType === options.type?.toLowerCase()) {
-      //     debouncedCallback();
-      //   }
-      // }
-      let lastEventType = null;
 
       for await (const event of watcher) {
-        if (
-          event.eventType === options.type?.toLowerCase() &&
-          event.eventType !== lastEventType
-        ) {
+        if (event.eventType === options.type?.toLowerCase()) {
           debouncedCallback();
-          lastEventType = event.eventType; // Store the last event type
         }
       }
     } catch (error) {

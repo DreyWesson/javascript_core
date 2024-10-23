@@ -14,19 +14,6 @@ const getCommandFileName = () => {
   });
 };
 
-// const debounce = (fn, delay) => {
-//     let timeId;
-  
-//     return function (...args) {
-//       if (timeId) {
-//         clearTimeout(timeId);
-//       }
-//       timeId = setTimeout(() => {
-//         fn.apply(this, args);
-//       }, delay);
-//     };
-//   };
-
 const debounce = (fn, delay) => {
   let timeId;
   let lastCallTime = 0;
