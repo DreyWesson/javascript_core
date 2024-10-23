@@ -53,7 +53,6 @@ const actions = {
   ],
   ADD_TO_FILE: [
     "add",
-    "write",
     "append",
     "attach",
     "include",

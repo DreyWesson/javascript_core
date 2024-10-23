@@ -54,9 +54,9 @@ async function fileHandler(filePath) {
     await gnl.open();
     let line;
     while ((line = await gnl.getNextLine()) !== null) {
-      console.log(line);
       await processLine(line);
     }
+    console.log("File processing completed.");
   } catch (error) {
     console.error("Error during file processing:", error.message);
   } finally {
