@@ -4,9 +4,23 @@ const { handleAllRequests } = require("./helper/httpRequestHandler.js");
 const fileOperations = require("./helper/fileOps.js");
 const { handleMath, executeCommand } = require("./helper/commandExecutor.js");
 const { getCommandFileName } = require("../utils/index.js");
+const { printWelcome } = require("./utils/index.js");
 
 (async function () {
-  const filePath = await getCommandFileName();
+  let filePath;
+
+  // Loop until a valid filename is provided
+  printWelcome();
+  while (!filePath) {
+    filePath = await getCommandFileName();
+
+    // Validate the filename (you can add more validation logic as needed)
+    if (!filePath || filePath.trim() === "") {
+      console.log("Invalid filename. Please enter a valid command file name.");
+      filePath = null; // Reset to prompt again
+    }
+  }
+
   const extIdx = filePath.lastIndexOf(".");
   const ext = extIdx !== -1 ? filePath.substring(extIdx + 1) : "";
 

@@ -9,8 +9,6 @@ const getCommandFileName = () => {
       output: process.stdout,
     });
     
-    printWelcome();
-
     const promptText = "Enter the name of the command file: ";
     let visible = true;
     let intervalId;
@@ -46,7 +44,7 @@ const getCommandFileName = () => {
       readline.cursorTo(process.stdout, 0);
       readline.clearLine(process.stdout, 0);
       rl.close();
-      resolve(fileName.trim() || "command.txt");
+      resolve(fileName.trim());
     });
   });
 };

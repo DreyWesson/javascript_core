@@ -124,7 +124,7 @@ function printWelcome() {
 
   console.log(`${BOLD}${GREEN}Welcome to the Command Processor!${RESET}`);
   console.log(
-    `Enter the name of the command file when prompted.`
+    `Create a command file when prompted.`
   );
   console.log(
     `${YELLOW}Usage based on file extensions:${RESET}`
