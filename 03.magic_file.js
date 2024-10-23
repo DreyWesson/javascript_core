@@ -1,19 +1,23 @@
 const { exec } = require("child_process");
 const MyBuffer = require("./01.buffer.js");
 const FileSystem = require("./02.filesystem.js");
-const { getCommandFileName } = require("./utils/index.js");
+const {
+  getCommandFileName,
+  isHttpRequest,
+  parseHttpRequest,
+} = require("./utils/index.js");
+const { handleHttpRequest } = require("./helper/httpRequestHandler.js");
+const fileOperations = require("./helper/fileOps.js");
 
 (async function () {
   const filePath = await getCommandFileName();
+  const extIdx = filePath.lastIndexOf(".");
+  const ext = extIdx !== -1 ? filePath.substring(extIdx + 1) : "";
 
   await FileSystem.createFile(filePath);
   FileSystem.fileWatcher(filePath, { type: "change" }, cb);
 
-  function splitOnFirstSpace(str) {
-    const index = str.indexOf(" ");
-    if (index === -1) return [str];
-    return [str.slice(0, index), str.slice(index + 1)];
-  }
+
 
   async function cb() {
     const buffer = await FileSystem.readFile(filePath);
@@ -32,8 +36,8 @@ const { getCommandFileName } = require("./utils/index.js");
 
     if (content.includes("[WAIT]")) return;
 
-    if (content.startsWith(actions.EXECUTE_COMMAND)) {
-      const command = content.substr(actions.EXECUTE_COMMAND.length).trim();
+    if (ext.length === 0) {
+      const command = content.trim();
       exec(command, (error, stdout, stderr) => {
         if (error) {
           console.error(`Error executing command: ${error.message}`);
@@ -45,172 +49,34 @@ const { getCommandFileName } = require("./utils/index.js");
         }
         console.log(`Command output:\n${stdout}`);
       });
-      return; // Exit early after handling the command
+      return;
     }
 
-    // Check for other actions
-    if (content.includes(actions.CREATE_FILE)) {
-      const filename = content.substr(actions.CREATE_FILE.length).trim();
-      await FileSystem.createFile(filename);
+    if (ext === "txt" || ext === "file") {
+      await fileOperations(content);
     }
 
-    if (content.includes(actions.DELETE_FILE)) {
-      const filename = content.substr(actions.DELETE_FILE.length).trim();
-      await FileSystem.deleteFile(filename);
-    }
-
-    if (content.includes(actions.RENAME_FILE)) {
-      const filename = content.substr(actions.RENAME_FILE.length).trim();
-      const [oldname, newname] = filename.split(" ");
-      await FileSystem.renameFile(oldname.trim(), newname.trim());
-    }
-
-    if (content.includes(actions.ADD_TO_FILE)) {
-      const rest = content.substr(actions.ADD_TO_FILE.length).trim();
-      const [filename, new_content] = splitOnFirstSpace(rest);
-      await FileSystem.addToFile(filename, new_content);
-    }
-
-    if (content.startsWith(actions.CALCULATE)) {
-      const expression = content.substr(actions.CALCULATE.length).trim();
+    if (ext === "math") {
+      const expression = content.trim();
       exec(`echo "${expression}" | bc`, (error, stdout) => {
         if (error) {
           console.error(`Error calculating: ${error.message}`);
         } else {
-          console.log(`Result: ${stdout}`);
+          console.log(`Result:\n\t${stdout}`);
         }
       });
     }
 
-    // New Functionality for RESTful Calls
-    const requests = parseHttpRequest(content);
+    if (ext === "http" || ext === "rest") {
+      const requests = parseHttpRequest(content);
 
-    // Check if requests are valid before processing
-    for (const request of requests) {
-      if (isHttpRequest(request)) {
-        await handleHttpRequest(request);
-      } else {
-        console.log("Not a valid HTTP request:", request);
-      }
-    }
-  }
-
-  function isHttpRequest(request) {
-    // Check for common HTTP methods in a case-sensitive manner
-    const httpMethods = [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE",
-      "PATCH",
-      "OPTIONS",
-      "HEAD",
-    ];
-    return httpMethods.includes(request.method.toUpperCase());
-  }
-
-  function parseHttpRequest(request) {
-    const requests = request.split("###");
-    const parsedRequests = [];
-
-    for (const req of requests) {
-      const lines = req.trim().split("\n");
-      if (lines.length === 0) continue; // Skip empty requests
-
-      // Extract the request line (first line)
-      const requestLine = lines[0].trim();
-      let [method, url, protocol] = requestLine.split(" ");
-
-      // Default protocol if not provided
-      const defaultProtocol = "HTTP/1.1";
-      if (!protocol) {
-        protocol = defaultProtocol;
-      }
-
-      // Initialize headers and body
-      const headers = {};
-      let body = "";
-      let isBody = false;
-
-      // Iterate through the lines to extract headers and body
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-
-        if (line === "") {
-          // Empty line indicates the start of the body
-          isBody = true;
-          continue;
-        }
-
-        if (isBody) {
-          // If we are in the body section, accumulate the body content
-          body += line + " "; // Use space instead of newline
+      for (const request of requests) {
+        if (isHttpRequest(request)) {
+          await handleHttpRequest(request);
         } else {
-          // Split header lines into key-value pairs
-          const [key, value] = line.split(/:\s+/);
-          if (key && value) {
-            headers[key] = value;
-          }
+          console.log("Not a valid HTTP request:", request);
         }
       }
-
-      // Remove any trailing spaces from the body
-      body = body.trim();
-
-      // Determine how to parse based on Content-Type
-      const contentType = headers["Content-Type"] || headers["content-type"];
-
-      try {
-        if (contentType && contentType.includes("application/json")) {
-          // Parse JSON only if Content-Type indicates JSON
-          body = JSON.parse(body);
-        } else if (!body) {
-          console.warn("Empty body; skipping JSON parsing.");
-        }
-      } catch (e) {
-        console.error("Failed to parse JSON body:", e.message);
-        continue; // Skip this request if parsing fails
-      }
-
-      // Push parsed components into the array
-      parsedRequests.push({ method, url, protocol, headers, body });
-    }
-
-    return parsedRequests;
-  }
-
-  async function handleHttpRequest({ method, url, headers, body }) {
-    let requestBody = body;
-
-    // Check if body is a file reference like "< ./demo.xml"
-    if (typeof body === "string" && body.startsWith("<")) {
-      const filePath = body.slice(1).trim();
-      try {
-        requestBody = await FileSystem.readFile(filePath, "utf8");
-      } catch (err) {
-        console.error(`Error reading file ${filePath}: ${err.message}`);
-        return;
-      }
-    }
-
-    const methodUpper = method.toUpperCase();
-
-    // Prepare request options
-    const requestOptions = {
-      method: methodUpper,
-      headers,
-      // Include body only for methods that allow it
-      body: ["POST", "PUT", "PATCH"].includes(methodUpper)
-        ? JSON.stringify(requestBody) // Ensure it's a string
-        : undefined,
-    };
-
-    try {
-      const response = await fetch(url, requestOptions);
-      const responseData = await response.text();
-      console.log(`Response from ${methodUpper} ${url}:`, responseData);
-    } catch (error) {
-      console.error(`Error during HTTP request: ${error.message}`);
     }
   }
 })().catch(console.error);

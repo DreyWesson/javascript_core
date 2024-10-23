@@ -1,0 +1,30 @@
+GET https://jsonplaceholder.typicode.com/posts/1
+
+PUT https://jsonplaceholder.typicode.com/posts/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "title": "updated title",
+  "body": "updated body content",
+  "userId": 1
+}
+
+PATCH https://jsonplaceholder.typicode.com/posts/1
+Content-Type: application/json
+
+{
+  "title": "partially updated title"
+}
+
+DELETE https://jsonplaceholder.typicode.com/posts/1
+
+POST https://jsonplaceholder.typicode.com/comments
+Content-Type: application/json
+
+{
+  "postId": 1,
+  "name": "New Comment",
+  "email": "test@example.com",
+  "body": "This is a new comment."
+}
