@@ -1,4 +1,5 @@
 const { exec } = require("child_process");
+const { COLORS } = require("../utils/constant");
 
 function executeCommand(content) {
   const command = content.trim();
@@ -17,12 +18,13 @@ function executeCommand(content) {
 }
 
 function handleMath(content) {
+  const { GREEN, RESET } = COLORS;
   const expression = content.trim();
   exec(`echo "${expression}" | bc`, (error, stdout) => {
     if (error) {
       console.error(`Error calculating: ${error.message}`);
     } else {
-      console.log(`Result:\n\t${stdout}`);
+      console.log(`Result:\n\t${GREEN}${stdout}${RESET}`);
     }
   });
 }

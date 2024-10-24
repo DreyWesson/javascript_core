@@ -1,3 +1,5 @@
+const { COLORS } = require("./constant");
+
 const isHttpRequest = (request) => {
   const httpMethods = [
     "GET",
@@ -112,34 +114,19 @@ function parseBody(body, headers) {
 }
 
 function printWelcome() {
-  const RESET = "\x1b[0m";
-  const BOLD = "\x1b[1m";
-  const GREEN = "\x1b[32m";
-  const YELLOW = "\x1b[33m";
-  const BLUE = "\x1b[34m";
-  const MAGENTA = "\x1b[35m";
-  const CYAN = "\x1b[36m";
-  const GRAY = "\x1b[90m";
-  const RED = "\x1b[31m";
+  const { RESET, BOLD, GREEN, YELLOW, BLUE, MAGENTA, GRAY, RED } = COLORS;
 
   console.log(`${BOLD}${GREEN}Welcome to the Command Processor!${RESET}`);
+  console.log(`Create a command file when prompted.`);
+  console.log(`${YELLOW}Usage based on file extensions:${RESET}`);
+  console.log(`${MAGENTA}  - ".http" or ".rest": ${GRAY}HTTP requests${RESET}`);
+  console.log(`${BLUE}  - ".txt" or ".file": ${GRAY}File operations${RESET}`);
+  console.log(`${GREEN}  - ".math": ${GRAY}Math calculations${RESET}`);
+  console.log(`${RED}  - No extension: ${GRAY}Terminal commands${RESET}`);
+  console.log(`${YELLOW}Usage based on autosave:${RESET}`);
   console.log(
-    `Create a command file when prompted.`
-  );
-  console.log(
-    `${YELLOW}Usage based on file extensions:${RESET}`
-  );
-  console.log(
-    `${MAGENTA}  - ".http" or ".rest": ${GRAY}HTTP requests${RESET}`
-  );
-  console.log(
-    `${BLUE}  - ".txt" or ".file": ${GRAY}File operations${RESET}`
-  );
-  console.log(
-    `${GREEN}  - ".math": ${GRAY}Math calculations${RESET}`
-  );
-  console.log(
-    `${RED}  - No extension: ${GRAY}Terminal commands${RESET}`
+    `       if (autosave) file_content(__WAIT) // eg __WAIT then write command...
+       if (done_writing) EOF(new_line) && remove(__WAIT)`
   );
 }
 

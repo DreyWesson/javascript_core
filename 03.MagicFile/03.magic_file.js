@@ -13,10 +13,8 @@ const { printWelcome } = require("./utils/index.js");
   printWelcome();
   while (!filePath) {
     filePath = await getCommandFileName();
-
-    // Validate the filename (you can add more validation logic as needed)
     if (!filePath || filePath.trim() === "") {
-      console.log("Invalid filename. Please enter a valid command file name.");
+      console.log("Invalid filename. Please enter a file name.");
       filePath = null; // Reset to prompt again
     }
   }
@@ -24,7 +22,7 @@ const { printWelcome } = require("./utils/index.js");
   const extIdx = filePath.lastIndexOf(".");
   const ext = extIdx !== -1 ? filePath.substring(extIdx + 1) : "";
 
-  await FileSystem.createFile(filePath);
+  await FileSystem.createFile(filePath);  
   const options = { type: "change" };
 
   FileSystem.fileWatcher(filePath, options, cb);
@@ -35,7 +33,7 @@ const { printWelcome } = require("./utils/index.js");
 
     if (!content || content.length < 2) return;
 
-    if (content.includes("[WAIT]")) return;
+    if (content.includes("__WAIT")) return;
 
     if (ext === "") executeCommand(content);
 

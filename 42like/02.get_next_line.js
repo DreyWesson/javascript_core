@@ -92,7 +92,7 @@ class GetNextLine {
         const bytesRead = await this.fillBuffer();
         if (bytesRead === 0 && line.length === 0) {
           await this.close();
-          return null; // EOF reached
+          return line || null; // EOF reached
         }
       }
 

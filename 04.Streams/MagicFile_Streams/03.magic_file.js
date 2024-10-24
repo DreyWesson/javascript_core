@@ -35,7 +35,7 @@ const { printWelcome } = require("./utils/index.js");
 
     if (!content || content.length < 2) return;
 
-    if (content.includes("[WAIT]")) return;
+    if (content.includes("__WAIT")) return;
 
     if (ext === "") executeCommand(content);
 

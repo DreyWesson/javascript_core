@@ -28,6 +28,7 @@ function actionIncludes(actionPart, actionArray) {
 }
 
 async function processLine(line) {
+  if (!line.trim()) return;
   const [action, filePath, content] = formatExtractedTokens(line);
 
   if (actionIncludes(action, actions.CREATE_FILE)) {
