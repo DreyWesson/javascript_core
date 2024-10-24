@@ -1,0 +1,9 @@
+POST https://jsonplaceholder.typicode.com/comments
+Content-Type: application/json
+
+{
+  "postId": 1,
+  "name": "New Comment",
+  "email": "test@example.com",
+  "body": "This is a new comment."
+}

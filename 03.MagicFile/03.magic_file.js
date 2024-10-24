@@ -1,5 +1,5 @@
 const MyBuffer = require("../01.Buffer/01.buffer.js");
-const FileSystem = require("../02.FileSystem/02.filesystem.js");
+const FileSystem = require("../02.FileSystem/filesystem.js");
 const { handleAllRequests } = require("./helper/httpRequestHandler.js");
 const fileOperations = require("./helper/fileOps.js");
 const { handleMath, executeCommand } = require("./helper/commandExecutor.js");

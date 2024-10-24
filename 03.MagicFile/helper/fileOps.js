@@ -1,4 +1,4 @@
-const FileSystem = require("../../02.FileSystem/02.filesystem.js");
+const FileSystem = require("../../02.FileSystem/filesystem.js");
 const { GetNextLine } = require("../../42like/02.get_next_line.js");
 const { actions } = require("../utils/constant.js");
 
